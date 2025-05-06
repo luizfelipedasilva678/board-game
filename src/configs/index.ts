@@ -3,7 +3,7 @@ import Game from "../game/scenes/game-scene";
 import type { Tile } from "../typings";
 
 const WIDTH = 1360;
-const HEIGHT = window.innerHeight;
+const HEIGHT = 932;
 const TILE_WIDTH = 130;
 const TILE_HEIGHT = 100;
 
