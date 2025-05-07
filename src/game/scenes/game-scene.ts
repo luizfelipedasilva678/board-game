@@ -1,4 +1,4 @@
-import { boardTiles } from "../../configs";
+import { boardTiles, powerUps } from "../../configs";
 
 const PLAYER_1_X_OFFSET = 50;
 const PLAYER_1_Y_OFFSET = 50;
@@ -7,10 +7,15 @@ const PLAYER_2_X_OFFSET = 100;
 const PLAYER_2_Y_OFFSET = 50;
 
 class Game extends Phaser.Scene {
-  private currentPlayer: "player1" | "player2" = "player1";
+  private players: ("player1" | "player2")[] = ["player1", "player2"];
+  private turnIdx: number = 0;
+  private missingTurn = new Set();
+  private currentPlayer: "player1" | "player2" | "none" = "player1";
   private player1: Phaser.GameObjects.Rectangle | null = null;
   private player2: Phaser.GameObjects.Rectangle | null = null;
   private currentPlayerText: Phaser.GameObjects.Text | null = null;
+  private turnText: Phaser.GameObjects.Text | null = null;
+  private turn: number = 1;
 
   constructor() {
     super({ key: "game" });
@@ -55,23 +60,42 @@ class Game extends Phaser.Scene {
     steps: number,
     xOffset: number,
     yOffset: number,
-    cb: () => void = () => {}
+    direction: "forward" | "backward" = "forward"
   ) {
-    const sequence = [];
+    return new Promise<void>((resolve) => {
+      const sequence = [];
 
-    for (let i = currentTile; i <= steps; i++) {
-      sequence.push({
-        x: boardTiles[i].x + xOffset,
-        y: boardTiles[i].y + yOffset,
-        duration: 500,
-        ease: "Linear",
+      if (direction === "backward") {
+        let i = 0;
+        while (i !== steps + 1 && currentTile >= 0) {
+          sequence.push({
+            x: boardTiles[currentTile].x + xOffset,
+            y: boardTiles[currentTile].y + yOffset,
+            duration: 500,
+            ease: "Linear",
+          });
+
+          currentTile--;
+          i++;
+        }
+      } else {
+        for (let i = currentTile; i <= steps; i++) {
+          sequence.push({
+            x: boardTiles[i].x + xOffset,
+            y: boardTiles[i].y + yOffset,
+            duration: 500,
+            ease: "Linear",
+          });
+        }
+      }
+
+      this.tweens.chain({
+        targets: player,
+        tweens: sequence,
+        onComplete: () => {
+          resolve();
+        },
       });
-    }
-
-    this.tweens.chain({
-      targets: player,
-      tweens: sequence,
-      onComplete: cb,
     });
   }
 
@@ -91,6 +115,48 @@ class Game extends Phaser.Scene {
     };
   }
 
+  async handleLuckOrSetback() {
+    let newPosition: number = 0;
+    const idx = this.getRandomArbitrary(0, 6);
+    const powerUp = powerUps[idx];
+    const { player, xOffset, yOffset } = this.getCurrentPlayer();
+    const currentPlayerPosition = this.getPlayerCurrentTile(
+      player,
+      xOffset,
+      yOffset
+    );
+
+    if (powerUp.type === "advanceAdvantage") {
+      newPosition =
+        currentPlayerPosition + (powerUp?.advance ?? 0) > boardTiles.length - 1
+          ? boardTiles.length - 1
+          : currentPlayerPosition + (powerUp?.advance ?? 0);
+
+      await this.makeMovement(
+        player,
+        currentPlayerPosition,
+        newPosition,
+        xOffset,
+        yOffset
+      );
+    }
+
+    if (powerUp.type === "retreatDisadvantage") {
+      await this.makeMovement(
+        player,
+        currentPlayerPosition,
+        powerUp?.retreat ?? 0,
+        xOffset,
+        yOffset,
+        "backward"
+      );
+    }
+
+    if (boardTiles[newPosition].type === "luckOrSetback") {
+      await this.handleLuckOrSetback();
+    }
+  }
+
   create() {
     this.add
       .rectangle(
@@ -101,6 +167,11 @@ class Game extends Phaser.Scene {
         0xffffff
       )
       .setOrigin(0, 0);
+
+    this.turnText = this.add.text(1000, 0, `Turno: ${this.turn}`, {
+      fontSize: "32px",
+      color: "#000000",
+    });
 
     for (const tile of boardTiles) {
       const graphics = this.add.graphics();
@@ -214,7 +285,9 @@ class Game extends Phaser.Scene {
       if (isCallbackActive) return;
 
       isCallbackActive = true;
-      const result = await new Promise<boolean>((resolve) => {
+      this.turn++;
+
+      if (this.currentPlayer !== "none") {
         const number = this.getRandomArbitrary(1, 7);
         const { xOffset, yOffset, player } = this.getCurrentPlayer();
         const currentPlayerPosition = this.getPlayerCurrentTile(
@@ -227,21 +300,45 @@ class Game extends Phaser.Scene {
             ? boardTiles.length - 1
             : currentPlayerPosition + number;
 
-        this.makeMovement(
+        await this.makeMovement(
           player,
           currentPlayerPosition,
           newPosition,
           xOffset,
-          yOffset,
-          () => {
-            resolve(false);
-            this.currentPlayer =
-              this.currentPlayer == "player1" ? "player2" : "player1";
-          }
+          yOffset
         );
-      });
 
-      isCallbackActive = result;
+        const tile = boardTiles[newPosition];
+
+        if (tile.type === "luckOrSetback") {
+          await this.handleLuckOrSetback();
+        }
+
+        if (
+          boardTiles[this.getPlayerCurrentTile(player, xOffset, yOffset)]
+            .type === "missATurn"
+        ) {
+          this.missingTurn.add(
+            this.players.filter((player) => player === this.currentPlayer)[0]
+          );
+        }
+      }
+
+      let nextPlayer: "player1" | "player2" | "none" = "none";
+
+      for (let i = 0; i < this.players.length; i++) {
+        this.turnIdx = (this.turnIdx + 1) % this.players.length;
+
+        if (!this.missingTurn.has(this.players[this.turnIdx])) {
+          nextPlayer = this.players[this.turnIdx];
+          break;
+        }
+
+        this.missingTurn.delete(this.players[this.turnIdx]);
+      }
+
+      this.currentPlayer = nextPlayer;
+      isCallbackActive = false;
     });
   }
 
@@ -249,6 +346,8 @@ class Game extends Phaser.Scene {
     this.currentPlayerText?.setText(
       `Turno do ${this.getFormattedPlayerName(this.currentPlayer)}`
     );
+
+    this.turnText?.setText(`Turno: ${this.turn}`);
   }
 }
 
