@@ -1,0 +1,6 @@
+const WIDTH = 1360;
+const HEIGHT = 932;
+const TILE_WIDTH = 130;
+const TILE_HEIGHT = 100;
+
+export { WIDTH, HEIGHT, TILE_WIDTH, TILE_HEIGHT };

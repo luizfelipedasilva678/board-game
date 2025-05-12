@@ -1,3 +1,5 @@
+type TileType = "normal" | "start" | "end" | "luckOrSetback" | "missATurn";
+
 export type Tile = {
   x: number;
   y: number;
@@ -6,4 +8,4 @@ export type Tile = {
   type: TileType;
 };
 
-type TileType = "normal" | "start" | "end" | "luckOrSetback" | "missATurn";
+export type PowerUpType = "advanceAdvantage" | "retreatDisadvantage";

@@ -1,4 +1,9 @@
-import { boardTiles, powerUps } from "../../configs";
+import Phaser from "phaser";
+import { Text, Tile } from "../components";
+import boardTiles from "../../configs/board";
+import powerUps from "../../configs/power-ups";
+import getRandomArbitrary from "../../utils";
+import { LIGHT_BLUE, OCEAN_BLUE, SKY_BLUE } from "../../configs/colors";
 
 const PLAYER_1_X_OFFSET = 50;
 const PLAYER_1_Y_OFFSET = 50;
@@ -29,12 +34,6 @@ class Game extends Phaser.Scene {
     return player === "player1"
       ? "Jogador 1 (Peão preto)"
       : "Jogador 2 (Peão verde)";
-  }
-
-  getRandomArbitrary(min: number, max: number) {
-    const minimum = Math.ceil(min);
-    const maximum = Math.floor(max);
-    return Math.floor(Math.random() * (maximum - minimum) + minimum);
   }
 
   getPlayerCurrentTile(
@@ -117,7 +116,7 @@ class Game extends Phaser.Scene {
 
   async handleLuckOrSetback() {
     let newPosition: number = 0;
-    const idx = this.getRandomArbitrary(0, 6);
+    const idx = getRandomArbitrary(0, powerUps.length);
     const powerUp = powerUps[idx];
     const { player, xOffset, yOffset } = this.getCurrentPlayer();
     const currentPlayerPosition = this.getPlayerCurrentTile(
@@ -157,7 +156,45 @@ class Game extends Phaser.Scene {
     }
   }
 
-  create() {
+  createBoard() {
+    for (const tile of boardTiles) {
+      switch (tile.type) {
+        case "start":
+          this.add.container(tile.x, tile.y, [
+            new Tile(this, 0, 0, tile.width, tile.height, LIGHT_BLUE),
+            new Text(this, 5, 35, "Início"),
+          ]);
+          break;
+        case "normal":
+          new Tile(this, tile.x, tile.y, tile.width, tile.height, LIGHT_BLUE);
+          break;
+        case "luckOrSetback":
+          this.add.container(tile.x, tile.y, [
+            new Tile(this, 0, 0, tile.width, tile.height, OCEAN_BLUE),
+            new Text(this, 47, 25, "?", { fontSize: "60px", align: "center" }),
+          ]);
+          break;
+        case "missATurn":
+          this.add.container(tile.x, tile.y, [
+            new Tile(this, 0, 0, tile.width, tile.height, SKY_BLUE),
+            new Text(this, 14, 7, ["Perca", "Um", "Turno"], {
+              align: "center",
+            }),
+          ]);
+          break;
+        case "end":
+          this.add.container(tile.x, tile.y, [
+            new Tile(this, 0, 0, tile.width, tile.height, LIGHT_BLUE),
+            new Text(this, 30, 35, "Fim"),
+          ]);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  initBackground() {
     this.add
       .rectangle(
         0,
@@ -167,79 +204,16 @@ class Game extends Phaser.Scene {
         0xffffff
       )
       .setOrigin(0, 0);
+  }
+
+  create() {
+    this.initBackground();
+    this.createBoard();
 
     this.turnText = this.add.text(1000, 0, `Turno: ${this.turn}`, {
       fontSize: "32px",
       color: "#000000",
     });
-
-    for (const tile of boardTiles) {
-      const graphics = this.add.graphics();
-
-      switch (tile.type) {
-        case "start":
-          graphics.lineStyle(2, 0x000000, 1);
-          graphics.fillStyle(0xb1d4e0, 1);
-          graphics.fillRect(0, 0, tile.width, tile.height);
-          graphics.strokeRect(0, 0, tile.width, tile.height);
-          this.add.container(tile.x, tile.y, [
-            graphics,
-            this.add.text(5, 35, "Início", {
-              fontSize: "32px",
-              color: "#000000",
-            }),
-          ]);
-          break;
-        case "normal":
-          graphics.x = tile.x;
-          graphics.y = tile.y;
-          graphics.lineStyle(2, 0x000000, 1);
-          graphics.fillStyle(0xb1d4e0, 1);
-          graphics.fillRect(0, 0, tile.width, tile.height);
-          graphics.strokeRect(0, 0, tile.width, tile.height);
-          break;
-        case "luckOrSetback":
-          graphics.lineStyle(2, 0x000000, 1);
-          graphics.fillStyle(0x2e8bc0, 1);
-          graphics.fillRect(0, 0, tile.width, tile.height);
-          graphics.strokeRect(0, 0, tile.width, tile.height);
-          this.add.container(tile.x, tile.y, [
-            graphics,
-            this.add.text(50, 35, "?", {
-              fontSize: "60px",
-              color: "#000000",
-            }),
-          ]);
-          break;
-        case "missATurn":
-          graphics.lineStyle(2, 0x000000, 1);
-          graphics.fillStyle(0x68bbe3, 1);
-          graphics.fillRect(0, 0, tile.width, tile.height);
-          graphics.strokeRect(0, 0, tile.width, tile.height);
-          this.add.container(tile.x, tile.y, [
-            graphics,
-            this.add.text(14, 7, ["Perca", "Um", "Turno"], {
-              fontSize: "32px",
-              color: "#000000",
-              align: "center",
-            }),
-          ]);
-          break;
-        case "end":
-          graphics.lineStyle(2, 0x000000, 1);
-          graphics.fillStyle(0xb1d4e0, 1);
-          graphics.fillRect(0, 0, tile.width, tile.height);
-          graphics.strokeRect(0, 0, tile.width, tile.height);
-          this.add.container(tile.x, tile.y, [
-            graphics,
-            this.add.text(30, 35, "Fim", {
-              fontSize: "32px",
-              color: "#000000",
-            }),
-          ]);
-          break;
-      }
-    }
 
     this.player1 = this.add.rectangle(
       boardTiles[0].x + PLAYER_1_X_OFFSET,
@@ -288,7 +262,7 @@ class Game extends Phaser.Scene {
       this.turn++;
 
       if (this.currentPlayer !== "none") {
-        const number = this.getRandomArbitrary(1, 7);
+        const number = getRandomArbitrary(1, 7);
         const { xOffset, yOffset, player } = this.getCurrentPlayer();
         const currentPlayerPosition = this.getPlayerCurrentTile(
           player,
