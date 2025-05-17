@@ -2,17 +2,18 @@ import Phaser from "phaser";
 import { Text, Tile } from "../components";
 import boardTiles from "../../configs/board";
 import powerUps from "../../configs/power-ups";
-import getRandomArbitrary from "../../utils";
 import { LIGHT_BLUE, OCEAN_BLUE, SKY_BLUE } from "../../configs/colors";
 import { Player } from "../components/Player";
+import { Dice } from "../components/Dice";
 
 class Game extends Phaser.Scene {
   private readonly players: Player[] = [];
-  private turnIdx = 0;
   private readonly missingTurn = new Set();
   private readonly quantityOfPlayers = 2;
+  private turnIdx = 0;
   private currentPlayerText: Phaser.GameObjects.Text | null = null;
   private turnText: Phaser.GameObjects.Text | null = null;
+  private dice: Dice | null = null;
   private turn = 1;
 
   constructor() {
@@ -20,7 +21,8 @@ class Game extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("sky", "../assets/sky.png");
+    this.load.image("dice-albedo", "../assets/dice-albedo.png");
+    this.load.obj("dice-obj", "../assets/dice.obj");
   }
 
   getCurrentPlayer() {
@@ -29,8 +31,7 @@ class Game extends Phaser.Scene {
 
   async handleLuckOrSetback() {
     let newPosition = 0;
-    const idx = getRandomArbitrary(0, powerUps.length);
-    const powerUp = powerUps[idx];
+    const powerUp = powerUps[Phaser.Math.Between(0, powerUps.length - 1)];
     const player = this.getCurrentPlayer();
     const currentPlayerPosition = player.currentTile();
 
@@ -102,11 +103,51 @@ class Game extends Phaser.Scene {
       .setOrigin(0, 0);
   }
 
+  async handleDiceRolling(diceValue: number) {
+    this.turn++;
+
+    if (this.turnIdx !== -1) {
+      const player = this.getCurrentPlayer();
+      const currentPlayerPosition = player.currentTile();
+      const newPosition =
+        currentPlayerPosition + diceValue > boardTiles.length - 1
+          ? boardTiles.length - 1
+          : currentPlayerPosition + diceValue;
+
+      await player.makeMovement(newPosition);
+
+      const tile = boardTiles[newPosition];
+
+      if (tile.type === "luckOrSetback") {
+        await this.handleLuckOrSetback();
+      }
+
+      if (boardTiles[player.currentTile()].type === "missATurn") {
+        this.missingTurn.add(this.turnIdx);
+      }
+    }
+
+    let nextTurnIdx = -1;
+    let nextPlayerIdx = this.turnIdx;
+    for (let i = 0; i < this.players.length; i++) {
+      nextPlayerIdx = (nextPlayerIdx + 1) % this.players.length;
+
+      if (!this.missingTurn.has(nextPlayerIdx)) {
+        nextTurnIdx = nextPlayerIdx;
+        break;
+      }
+
+      this.missingTurn.delete(nextPlayerIdx);
+    }
+
+    this.turnIdx = nextTurnIdx;
+  }
+
   create() {
     this.initBackground();
     this.createBoard();
 
-    this.turnText = this.add.text(1000, 0, `Turno: ${this.turn}`, {
+    this.turnText = this.add.text(1000, 20, `Turno: ${this.turn}`, {
       fontSize: "32px",
       color: "#000000",
     });
@@ -130,19 +171,9 @@ class Game extends Phaser.Scene {
       );
     }
 
-    const diceButtonRect = this.add.rectangle(0, 0, 300, 100, 0x000000);
-    this.add.container(170, 800, [
-      diceButtonRect,
-      this.add
-        .text(0, 0, "Sortear número", {
-          fontSize: "32px",
-          color: "#ffff",
-        })
-        .setOrigin(0.5),
-    ]);
-
+    this.dice = new Dice(this, 78, 800);
     this.currentPlayerText = this.add.text(
-      325,
+      195,
       900,
       `Turno do ${this.getCurrentPlayer().displayName}`,
       {
@@ -152,53 +183,7 @@ class Game extends Phaser.Scene {
     );
 
     this.currentPlayerText.setOrigin(0.5);
-
-    diceButtonRect.setInteractive();
-    let isCallbackActive = false;
-    diceButtonRect.on("pointerdown", async () => {
-      if (isCallbackActive) return;
-
-      isCallbackActive = true;
-      this.turn++;
-
-      if (this.turnIdx !== -1) {
-        const number = getRandomArbitrary(1, 7);
-        const player = this.getCurrentPlayer();
-        const currentPlayerPosition = player.currentTile();
-        const newPosition =
-          currentPlayerPosition + number > boardTiles.length - 1
-            ? boardTiles.length - 1
-            : currentPlayerPosition + number;
-
-        await player.makeMovement(newPosition);
-
-        const tile = boardTiles[newPosition];
-
-        if (tile.type === "luckOrSetback") {
-          await this.handleLuckOrSetback();
-        }
-
-        if (boardTiles[player.currentTile()].type === "missATurn") {
-          this.missingTurn.add(this.turnIdx);
-        }
-      }
-
-      let nextTurnIdx = -1;
-      let nextPlayerIdx = this.turnIdx;
-      for (let i = 0; i < this.players.length; i++) {
-        nextPlayerIdx = (nextPlayerIdx + 1) % this.players.length;
-
-        if (!this.missingTurn.has(nextPlayerIdx)) {
-          nextTurnIdx = nextPlayerIdx;
-          break;
-        }
-
-        this.missingTurn.delete(nextPlayerIdx);
-      }
-
-      this.turnIdx = nextTurnIdx;
-      isCallbackActive = false;
-    });
+    this.dice.onRoll(this.handleDiceRolling.bind(this));
   }
 
   update() {
@@ -207,7 +192,7 @@ class Game extends Phaser.Scene {
         `Turno do ${this.getCurrentPlayer().displayName}`
       );
     } else {
-      this.currentPlayerText?.setText(`Todos os jogadores perderam um turno`);
+      this.currentPlayerText?.setText("Todos os jogadores perderam um turno");
     }
 
     this.turnText?.setText(`Turno: ${this.turn}`);
