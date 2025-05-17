@@ -1,8 +1,13 @@
 canvas {
-	box-shadow: -3px 1px 7px 0px rgba(0, 0, 0, 0.75);
-	margin: 16px 0;
+  box-shadow: -3px 1px 7px 0px rgba(0, 0, 0, 0.75);
+  margin: 16px 0;
 }
 
 body {
-	background: #b1d4e0;
+  background: #b1d4e0;
+}
+
+@font-face {
+  font-family: "PoetsenOne";
+  src: url("/font/PoetsenOne-Regular.ttf") format("truetype");
 }

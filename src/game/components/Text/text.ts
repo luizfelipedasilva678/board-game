@@ -9,6 +9,7 @@ class Text extends Phaser.GameObjects.Text {
     super(scene, x, y, text, {
       fontSize: "32px",
       color: "#000000",
+      fontFamily: "PoetsenOne",
       ...style,
     });
     this.scene.add.existing(this);

@@ -9,20 +9,17 @@ import { Dice } from "../components/Dice";
 class Game extends Phaser.Scene {
   private readonly players: Player[] = [];
   private readonly missingTurn = new Set();
-  private readonly quantityOfPlayers = 2;
+  private readonly log: string[] = ["\nRegistro de jogadas: \n"];
+  private readonly quantityOfPlayers = 4;
   private turnIdx = 0;
   private currentPlayerText: Phaser.GameObjects.Text | null = null;
   private turnText: Phaser.GameObjects.Text | null = null;
+  private gameLog: Phaser.GameObjects.Text | null = null;
   private dice: Dice | null = null;
   private turn = 1;
 
   constructor() {
     super({ key: "game" });
-  }
-
-  preload() {
-    this.load.image("dice-albedo", "../assets/dice-albedo.png");
-    this.load.obj("dice-obj", "../assets/dice.obj");
   }
 
   getCurrentPlayer() {
@@ -34,6 +31,10 @@ class Game extends Phaser.Scene {
     const powerUp = powerUps[Phaser.Math.Between(0, powerUps.length - 1)];
     const player = this.getCurrentPlayer();
     const currentPlayerPosition = player.currentTile();
+
+    this.addLog(
+      `- ${powerUp.description.replace("{player}", player.displayName)}`
+    );
 
     if (powerUp.type === "advanceAdvantage") {
       newPosition =
@@ -59,7 +60,9 @@ class Game extends Phaser.Scene {
         case "start":
           this.add.container(tile.x, tile.y, [
             new Tile(this, 0, 0, tile.width, tile.height, LIGHT_BLUE),
-            new Text(this, 5, 35, "Início"),
+            new Text(this, tile.width / 2, tile.height / 2, "Início").setOrigin(
+              0.5
+            ),
           ]);
           break;
         case "normal":
@@ -68,27 +71,43 @@ class Game extends Phaser.Scene {
         case "luckOrSetback":
           this.add.container(tile.x, tile.y, [
             new Tile(this, 0, 0, tile.width, tile.height, OCEAN_BLUE),
-            new Text(this, 47, 25, "?", { fontSize: "60px", align: "center" }),
+            new Text(this, tile.width / 2, tile.height / 2, "?", {
+              fontSize: "60px",
+              align: "center",
+            }).setOrigin(0.5),
           ]);
           break;
         case "missATurn":
           this.add.container(tile.x, tile.y, [
             new Tile(this, 0, 0, tile.width, tile.height, SKY_BLUE),
-            new Text(this, 14, 7, ["Perca", "Um", "Turno"], {
-              align: "center",
-            }),
+            new Text(
+              this,
+              tile.width / 2,
+              tile.height / 2,
+              ["Perca", "Um", "Turno"],
+              {
+                align: "center",
+                fontSize: "28px",
+              }
+            ).setOrigin(0.5),
           ]);
           break;
         case "end":
           this.add.container(tile.x, tile.y, [
             new Tile(this, 0, 0, tile.width, tile.height, LIGHT_BLUE),
-            new Text(this, 30, 35, "Fim"),
+            new Text(this, tile.width / 2, tile.height / 2, "Fim").setOrigin(
+              0.5
+            ),
           ]);
           break;
         default:
           break;
       }
     }
+  }
+
+  addLog(log: string) {
+    this.log.push(log);
   }
 
   initBackground() {
@@ -114,6 +133,10 @@ class Game extends Phaser.Scene {
           ? boardTiles.length - 1
           : currentPlayerPosition + diceValue;
 
+      this.addLog(
+        `- ${this.getCurrentPlayer().displayName} avançou ${diceValue} casas`
+      );
+
       await player.makeMovement(newPosition);
 
       const tile = boardTiles[newPosition];
@@ -123,6 +146,7 @@ class Game extends Phaser.Scene {
       }
 
       if (boardTiles[player.currentTile()].type === "missATurn") {
+        this.addLog(`- ${this.getCurrentPlayer().displayName} perdeu um turno`);
         this.missingTurn.add(this.turnIdx);
       }
     }
@@ -147,11 +171,7 @@ class Game extends Phaser.Scene {
     this.initBackground();
     this.createBoard();
 
-    this.turnText = this.add.text(1000, 20, `Turno: ${this.turn}`, {
-      fontSize: "32px",
-      color: "#000000",
-    });
-
+    this.turnText = new Text(this, 1000, 20, `Turno: ${this.turn}`);
     const color = new Phaser.Display.Color();
 
     for (let i = 0; i < this.quantityOfPlayers; i++) {
@@ -172,30 +192,32 @@ class Game extends Phaser.Scene {
     }
 
     this.dice = new Dice(this, 78, 800);
-    this.currentPlayerText = this.add.text(
+    this.currentPlayerText = new Text(
+      this,
       195,
       900,
-      `Turno do ${this.getCurrentPlayer().displayName}`,
-      {
-        fontSize: "32px",
-        color: "#000000",
-      }
+      `Turno do ${this.getCurrentPlayer().displayName}`
     );
+
+    this.gameLog = new Text(this, 1000, 60, "", {
+      fontSize: "16px",
+    });
 
     this.currentPlayerText.setOrigin(0.5);
     this.dice.onRoll(this.handleDiceRolling.bind(this));
   }
 
   update() {
+    this.turnText!.setText(`Turno: ${this.turn}`);
+    this.gameLog!.setText(this.log.join("\n"));
+
     if (this.turnIdx !== -1) {
-      this.currentPlayerText?.setText(
+      this.currentPlayerText!.setText(
         `Turno do ${this.getCurrentPlayer().displayName}`
       );
     } else {
-      this.currentPlayerText?.setText("Todos os jogadores perderam um turno");
+      this.currentPlayerText!.setText("Todos os jogadores perderam um turno");
     }
-
-    this.turnText?.setText(`Turno: ${this.turn}`);
   }
 }
 
