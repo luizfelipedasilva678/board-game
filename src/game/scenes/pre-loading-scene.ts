@@ -7,6 +7,8 @@ class PreloadScene extends Phaser.Scene {
   }
 
   create() {
+    this.cameras.main.setBackgroundColor("#ffffff");
+
     Webfont.load({
       custom: {
         families: ["PoetsenOne"],

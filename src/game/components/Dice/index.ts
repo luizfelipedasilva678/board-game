@@ -1,1 +1,1 @@
-export { default as Dice } from "./dice";
+export { default } from "./dice";

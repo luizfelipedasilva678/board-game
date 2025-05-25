@@ -14,7 +14,7 @@ class Player extends Phaser.GameObjects.Rectangle {
     yOffset = 20,
     color = 0x000000
   ) {
-    super(scene, x, y, 20, 20, color);
+    super(scene, x + xOffset, y + yOffset, 20, 20, color);
     this.scene.add.existing(this);
 
     this.xOffset = xOffset;
@@ -26,7 +26,7 @@ class Player extends Phaser.GameObjects.Rectangle {
     return `Jogador ${this.id + 1}`;
   }
 
-  currentTile() {
+  getCurrentTile() {
     for (let i = 0; i < boardTiles.length; i++) {
       if (
         this.x === boardTiles[i].x + this.xOffset &&
@@ -41,7 +41,7 @@ class Player extends Phaser.GameObjects.Rectangle {
 
   makeMovement(steps: number, direction: "forward" | "backward" = "forward") {
     return new Promise<void>((resolve) => {
-      let currentTile = this.currentTile();
+      let currentTile = this.getCurrentTile();
       const sequence = [];
 
       if (direction === "backward") {

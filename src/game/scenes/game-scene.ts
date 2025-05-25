@@ -1,21 +1,21 @@
 import Phaser from "phaser";
-import { Text, Tile } from "../components";
+import { Text, Tile, Player, Monster, Dice } from "../components";
 import boardTiles from "../../configs/board";
 import powerUps from "../../configs/power-ups";
 import { LIGHT_BLUE, OCEAN_BLUE, SKY_BLUE } from "../../configs/colors";
-import { Player } from "../components/Player";
-import { Dice } from "../components/Dice";
 
 class Game extends Phaser.Scene {
-  private readonly players: Player[] = [];
-  private readonly missingTurn = new Set();
-  private readonly log: string[] = ["\nRegistro de jogadas: \n"];
-  private readonly quantityOfPlayers = 4;
+  private players: Player[] = [];
+  private missingTurn = new Set();
+  private killedPlayers = new Set();
+  private log: string[] = ["\nRegistro de jogadas: \n"];
+  private quantityOfPlayers = 4;
   private turnIdx = 0;
   private currentPlayerText: Phaser.GameObjects.Text | null = null;
   private turnText: Phaser.GameObjects.Text | null = null;
   private gameLog: Phaser.GameObjects.Text | null = null;
   private dice: Dice | null = null;
+  private monster: Monster | null = null;
   private turn = 1;
 
   constructor() {
@@ -26,11 +26,17 @@ class Game extends Phaser.Scene {
     return this.players[this.turnIdx];
   }
 
+  getWinner() {
+    return this.players.find(
+      (player) => player.getCurrentTile() === boardTiles.length - 1
+    );
+  }
+
   async handleLuckOrSetback() {
     let newPosition = 0;
     const powerUp = powerUps[Phaser.Math.Between(0, powerUps.length - 1)];
     const player = this.getCurrentPlayer();
-    const currentPlayerPosition = player.currentTile();
+    const currentPlayerPosition = player.getCurrentTile();
 
     this.addLog(
       `- ${powerUp.description.replace("{player}", player.displayName)}`
@@ -110,16 +116,19 @@ class Game extends Phaser.Scene {
     this.log.push(log);
   }
 
-  initBackground() {
-    this.add
-      .rectangle(
-        0,
-        0,
-        +this.game.config.width,
-        +this.game.config.height,
-        0xffffff
-      )
-      .setOrigin(0, 0);
+  init() {
+    this.players = [];
+    this.missingTurn = new Set();
+    this.killedPlayers = new Set();
+    this.log = ["\nRegistro de jogadas: \n"];
+    this.quantityOfPlayers = 1;
+    this.turnIdx = 0;
+    this.currentPlayerText = null;
+    this.turnText = null;
+    this.gameLog = null;
+    this.dice = null;
+    this.monster = null;
+    this.turn = 1;
   }
 
   async handleDiceRolling(diceValue: number) {
@@ -127,7 +136,7 @@ class Game extends Phaser.Scene {
 
     if (this.turnIdx !== -1) {
       const player = this.getCurrentPlayer();
-      const currentPlayerPosition = player.currentTile();
+      const currentPlayerPosition = player.getCurrentTile();
       const newPosition =
         currentPlayerPosition + diceValue > boardTiles.length - 1
           ? boardTiles.length - 1
@@ -145,9 +154,22 @@ class Game extends Phaser.Scene {
         await this.handleLuckOrSetback();
       }
 
-      if (boardTiles[player.currentTile()].type === "missATurn") {
+      if (boardTiles[player.getCurrentTile()].type === "missATurn") {
         this.addLog(`- ${this.getCurrentPlayer().displayName} perdeu um turno`);
         this.missingTurn.add(this.turnIdx);
+      }
+    }
+
+    this.monster!.move();
+
+    for (const player of this.players) {
+      if (
+        player.getCurrentTile() === this.monster!.getCurrentTile() &&
+        !this.killedPlayers.has(this.players.indexOf(player))
+      ) {
+        this.addLog(`- ${player.displayName} morreu`);
+        player.visible = false;
+        this.killedPlayers.add(this.players.indexOf(player));
       }
     }
 
@@ -156,7 +178,10 @@ class Game extends Phaser.Scene {
     for (let i = 0; i < this.players.length; i++) {
       nextPlayerIdx = (nextPlayerIdx + 1) % this.players.length;
 
-      if (!this.missingTurn.has(nextPlayerIdx)) {
+      if (
+        !this.missingTurn.has(nextPlayerIdx) &&
+        !this.killedPlayers.has(nextPlayerIdx)
+      ) {
         nextTurnIdx = nextPlayerIdx;
         break;
       }
@@ -168,7 +193,7 @@ class Game extends Phaser.Scene {
   }
 
   create() {
-    this.initBackground();
+    this.cameras.main.setBackgroundColor("#ffffff");
     this.createBoard();
 
     this.turnText = new Text(this, 1000, 20, `Turno: ${this.turn}`);
@@ -182,8 +207,8 @@ class Game extends Phaser.Scene {
         new Player(
           this,
           i,
-          boardTiles[0].x + xOffset,
-          boardTiles[0].x + yOffset,
+          boardTiles[0].x,
+          boardTiles[0].y,
           xOffset,
           yOffset,
           color.random(50).color
@@ -191,6 +216,7 @@ class Game extends Phaser.Scene {
       );
     }
 
+    this.monster = new Monster(this, boardTiles[0].x, boardTiles[0].y, 67, 50);
     this.dice = new Dice(this, 78, 800);
     this.currentPlayerText = new Text(
       this,
@@ -208,6 +234,18 @@ class Game extends Phaser.Scene {
   }
 
   update() {
+    const winner = this.getWinner();
+
+    if (winner) {
+      this.scene.start("winnerscene", {
+        player: winner.displayName,
+      });
+    }
+
+    if (this.killedPlayers.size === this.players.length) {
+      this.scene.start("gameover");
+    }
+
     this.turnText!.setText(`Turno: ${this.turn}`);
     this.gameLog!.setText(this.log.join("\n"));
 

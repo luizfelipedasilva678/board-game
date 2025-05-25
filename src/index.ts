@@ -4,6 +4,8 @@ import { HEIGHT, WIDTH } from "./configs/dimensions";
 import Game from "./game/scenes/game-scene";
 import PreloadScene from "./game/scenes/pre-loading-scene";
 import LoadingScene from "./game/scenes/loading-scene";
+import GameOverScene from "./game/scenes/game-over";
+import WinnerScene from "./game/scenes/winner-scene";
 
 const gameConfig: Phaser.Types.Core.GameConfig = {
   width: WIDTH,
@@ -13,10 +15,10 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [PreloadScene, LoadingScene, Game],
+  scene: [PreloadScene, LoadingScene, Game, GameOverScene, WinnerScene],
   physics: {
     default: "arcade",
   },
 };
 
-const game = new Phaser.Game(gameConfig);
+new Phaser.Game(gameConfig);

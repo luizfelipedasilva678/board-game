@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Text } from "../components";
 
 class LoadingScene extends Phaser.Scene {
   constructor() {
@@ -9,15 +10,16 @@ class LoadingScene extends Phaser.Scene {
     this.load.image("dice-albedo", "/dice-albedo.png");
     this.load.obj("dice-obj", "/dice.obj");
 
-    this.add.text(
+    new Text(
+      this,
       +this.game.config.width / 2,
       +this.game.config.height / 2,
       "Carregando..."
-    );
+    ).setOrigin(0.5);
   }
 
   create() {
-    console.log("loading");
+    this.cameras.main.setBackgroundColor("#ffffff");
     this.scene.start("game");
   }
 }
