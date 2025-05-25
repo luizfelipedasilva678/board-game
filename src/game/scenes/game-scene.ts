@@ -216,11 +216,11 @@ class Game extends Phaser.Scene {
       );
     }
 
-    this.monster = new Monster(this, boardTiles[0].x, boardTiles[0].y, 67, 50);
+    this.monster = new Monster(this, boardTiles[0].x, boardTiles[0].y, 67, 65);
     this.dice = new Dice(this, 78, 800);
     this.currentPlayerText = new Text(
       this,
-      195,
+      170,
       900,
       `Turno do ${this.getCurrentPlayer().displayName}`
     );

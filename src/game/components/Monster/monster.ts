@@ -1,6 +1,6 @@
 import boardTiles from "../../../configs/board";
 
-class Monster extends Phaser.GameObjects.Rectangle {
+class Monster extends Phaser.GameObjects.Image {
   private readonly xOffset: number;
   private readonly yOffset: number;
 
@@ -9,11 +9,12 @@ class Monster extends Phaser.GameObjects.Rectangle {
     x: number,
     y: number,
     xOffset: number,
-    yOffset = 20,
-    color = 0x000000
+    yOffset = 20
   ) {
-    super(scene, x + xOffset, y + yOffset, 20, 20, color);
+    super(scene, x + xOffset, y + yOffset, "monster");
     this.scene.add.existing(this);
+
+    this.scale = 0.03;
 
     this.xOffset = xOffset;
     this.yOffset = yOffset;
