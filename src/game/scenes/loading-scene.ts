@@ -9,6 +9,7 @@ class LoadingScene extends Phaser.Scene {
   preload() {
     this.load.image("dice-albedo", "/dice-albedo.png");
     this.load.obj("dice-obj", "/dice.obj");
+    this.load.image("pawn", "/pawn.png");
 
     new Text(
       this,

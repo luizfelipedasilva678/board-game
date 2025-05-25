@@ -1,6 +1,6 @@
 import boardTiles from "../../../configs/board";
 
-class Player extends Phaser.GameObjects.Rectangle {
+class Player extends Phaser.GameObjects.Image {
   private readonly xOffset: number;
   private readonly yOffset: number;
   private readonly id: number;
@@ -14,8 +14,12 @@ class Player extends Phaser.GameObjects.Rectangle {
     yOffset = 20,
     color = 0x000000
   ) {
-    super(scene, x + xOffset, y + yOffset, 20, 20, color);
+    super(scene, x + xOffset, y + yOffset, "pawn");
     this.scene.add.existing(this);
+
+    this.scale = 0.05;
+    this.setOrigin(0.5);
+    this.setTint(color);
 
     this.xOffset = xOffset;
     this.yOffset = yOffset;
