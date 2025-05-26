@@ -11,3 +11,42 @@ body {
   font-family: "PoetsenOne";
   src: url("/font/PoetsenOne-Regular.ttf") format("truetype");
 }
+
+form {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+form,
+body,
+input,
+label {
+  font-family: "PoetsenOne", sans-serif;
+}
+
+label {
+  font-size: 30px;
+}
+
+input {
+  padding: 16px;
+  font-size: 20px;
+  border-radius: 8px;
+  border: none;
+  box-shadow: -3px 1px 7px 0px rgba(0, 0, 0, 0.75);
+  outline: none;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}

@@ -38,7 +38,7 @@ class WinnerScene extends Phaser.Scene {
       +this.game.config.height / 2 + 100,
       "Jogar novamente",
       () => {
-        this.scene.start("game");
+        this.scene.start("menu");
       },
       LIGHT_BLUE,
       350

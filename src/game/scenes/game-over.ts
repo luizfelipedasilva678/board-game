@@ -31,7 +31,7 @@ class GameOverScene extends Phaser.Scene {
       +this.game.config.height / 2 + 100,
       "Reiniciar",
       () => {
-        this.scene.start("game");
+        this.scene.start("menu");
       }
     );
   }

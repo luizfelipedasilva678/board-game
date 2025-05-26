@@ -116,12 +116,12 @@ class Game extends Phaser.Scene {
     this.log.push(log);
   }
 
-  init() {
+  init(data: Record<string, any>) {
     this.players = [];
     this.missingTurn = new Set();
     this.killedPlayers = new Set();
     this.log = ["\nRegistro de jogadas: \n"];
-    this.quantityOfPlayers = 4;
+    this.quantityOfPlayers = data.quantityOfPlayers ?? 2;
     this.turnIdx = 0;
     this.currentPlayerText = null;
     this.turnText = null;

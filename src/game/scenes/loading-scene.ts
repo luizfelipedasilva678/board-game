@@ -10,7 +10,9 @@ class LoadingScene extends Phaser.Scene {
     this.load.image("dice-albedo", "/dice-albedo.png");
     this.load.obj("dice-obj", "/dice.obj");
     this.load.image("pawn", "/pawn.png");
+    this.load.image("close", "/close.svg");
     this.load.image("monster", "/monster.png");
+    this.load.html("game-config-form", "/html/game-config-form.html");
 
     new Text(
       this,
@@ -22,7 +24,7 @@ class LoadingScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor("#ffffff");
-    this.scene.start("game");
+    this.scene.start("menu");
   }
 }
 
