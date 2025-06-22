@@ -25,8 +25,8 @@ class HowToPlayScene extends Phaser.Scene {
       +this.game.config.width / 2,
       150,
       [
-        " - Na sua vez, role o dado e o seu peão vai avançar o número de casas retirados",
-        " - Se cair em uma casa marcada com um ? um sorte ou revés pode sair",
+        " - Na sua vez, role o dado e o seu peão vai avançar o número de acordo retirado",
+        ' - Se cair em uma casa marcada com um "?" um sorte ou revés pode sair',
         " - A cada turno o monstro aparece em uma casa aleatória",
         " - Se o monstro aparecer na sua casa você é eliminado",
         " - Ganha quem chegar ao fim do tabuleiro primeiro",
