@@ -253,8 +253,10 @@ class Game extends Phaser.Scene {
       this.currentPlayerText!.setText(
         `Turno do ${this.getCurrentPlayer().displayName}`
       );
+      this.currentPlayerText!.setX(170);
     } else {
       this.currentPlayerText!.setText("Todos os jogadores perderam um turno");
+      this.currentPlayerText!.setX(320);
     }
   }
 }

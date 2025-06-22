@@ -22,6 +22,7 @@ form {
 form,
 body,
 input,
+select,
 label {
   font-family: "PoetsenOne", sans-serif;
 }
@@ -30,6 +31,7 @@ label {
   font-size: 30px;
 }
 
+select,
 input {
   padding: 16px;
   font-size: 20px;
@@ -37,6 +39,7 @@ input {
   border: none;
   box-shadow: -3px 1px 7px 0px rgba(0, 0, 0, 0.75);
   outline: none;
+  background: transparent;
 }
 
 /* Chrome, Safari, Edge, Opera */

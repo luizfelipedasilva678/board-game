@@ -31,7 +31,9 @@ class MenuScene extends Phaser.Scene {
       +this.game.config.height / 2,
       "Jogar",
       () => {
-        const value = +quantityOfPlayersInput.value;
+        const value = Number.isNaN(Number(quantityOfPlayersInput.value))
+          ? 1
+          : Number(quantityOfPlayersInput.value);
 
         this.scene.start("game", {
           quantityOfPlayers: value > 4 ? 4 : value < 1 ? 1 : value,
