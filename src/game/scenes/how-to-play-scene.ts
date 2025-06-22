@@ -27,8 +27,8 @@ class HowToPlayScene extends Phaser.Scene {
       [
         " - Na sua vez, role o dado e o seu peão vai avançar o número de casas retirados",
         " - Se cair em uma casa marcada com um ? um sorte ou revés pode sair",
-        " - A cada turno o mostro aparece em uma casa aleatória",
-        " - Se o mostro aparecer na sua casa você é eliminado",
+        " - A cada turno o monstro aparece em uma casa aleatória",
+        " - Se o monstro aparecer na sua casa você é eliminado",
         " - Ganha quem chegar ao fim do tabuleiro primeiro",
       ],
       {
